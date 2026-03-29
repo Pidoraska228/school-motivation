@@ -68,6 +68,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error("Ошибка загрузки данных:", err);
+            
+            // Показываем уведомление пользователю, если база данных недоступна
+            const greeting = document.getElementById('student-greeting');
+            if (greeting) greeting.textContent = "Ошибка загрузки данных. Используются локальные настройки.";
+
+            // Если данные не загрузились, инициализируем пустые объекты, чтобы сайт не "падал"
+            appData = appData || { student: {}, schedule: [], homework: [], classmates: [], chartData: [] };
+            dynamicHomework = dynamicHomework || [];
+            dynamicClassmates = dynamicClassmates || [];
+            
             if (!currentUser) showPage('auth');
         }
     }
@@ -90,21 +100,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!regForm) return;
 
         // Имитация списка школ при выборе региона
-        regionSelect.onchange = (e) => {
+        regionSelect.addEventListener('change', () => {
             const schools = {
                 "77": ["Гимназия №1505", "Лицей №1533", "Школа №57"],
                 "78": ["Лицей №239", "Гимназия №56"],
                 "50": ["Школа №1 (Одинцово)", "Лицей №10 (Химки)"]
             };
-            const list = schools[e.target.value] || [];
-            schoolSelect.innerHTML = '<option value="">Выберите школу</option>';
+            const selectedRegion = regionSelect.value;
+            const list = schools[selectedRegion] || [];
+            
+            // Очищаем список школ и добавляем правильный плейсхолдер
+            schoolSelect.innerHTML = '';
+            const placeholder = document.createElement('option');
+            placeholder.value = "";
+            placeholder.textContent = selectedRegion ? "Выберите школу" : "Сначала выберите регион";
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            schoolSelect.appendChild(placeholder);
+
             list.forEach(s => {
                 const option = document.createElement('option');
                 option.value = s;
                 option.textContent = s;
                 schoolSelect.appendChild(option);
             });
-        };
+        });
 
         regForm.onsubmit = (e) => {
             e.preventDefault();
@@ -156,11 +176,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('logo-home').onclick = () => showPage('home');
         document.getElementById('add-points-btn').onclick = addPoints;
 
+        // Обработка кнопок закрытия модальных окон
+        document.getElementById('close-hw-details').onclick = () => {
+            document.getElementById('hw-details').style.display = 'none';
+        };
+        document.getElementById('cancel-hw-btn').onclick = () => {
+            document.getElementById('add-hw-modal').style.display = 'none';
+        };
+
+        // Делегирование событий для таблицы класса (начисление баллов)
+        const classTable = document.getElementById('class-table');
+        if (classTable) {
+            classTable.addEventListener('click', (e) => {
+                if (e.target.classList.contains('reward-btn')) {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    rewardStudent(index);
+                }
+            });
+        }
+
         // Обработка кнопок учителя
         const addHwBtn = document.getElementById('add-hw-btn');
         if (addHwBtn) {
             addHwBtn.onclick = () => document.getElementById('add-hw-modal').style.display = 'block';
         }
+
+        const sendBonusBtn = document.getElementById('send-bonus-btn');
+        if (sendBonusBtn) {
+            sendBonusBtn.onclick = () => alert('Бонус отправлен! На телефон ребенка придет уведомление.');
+        }
+
         const saveHwBtn = document.getElementById('save-hw-btn');
         if (saveHwBtn) {
             saveHwBtn.onclick = saveHomework;
@@ -169,6 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        
+        // Подсветка активной кнопки в меню
+        document.querySelectorAll('.nav-links button').forEach(btn => {
+            btn.style.color = btn.dataset.page === pageId ? 'var(--primary-green)' : 'var(--text-dark)';
+        });
+
         const targetPage = document.getElementById(pageId);
         if (targetPage) targetPage.classList.add('active');
         
@@ -209,6 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
             hwList.appendChild(fragment);
         }
 
+        // Оценки
+        const gradesList = document.getElementById('grades-list');
+        if (gradesList && appData.student?.grades) {
+            gradesList.textContent = appData.student.grades.join(', ');
+        }
+
         document.getElementById('teacher-class-name').textContent = `Класс: ${appData.student?.class || '...'} | ${currentUser.school}`;
         document.getElementById('parent-child-name').textContent = `Прогресс: ${currentUser.name}`;
         
@@ -221,7 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td>${c.name}</td>
                         <td>${c.grade}</td>
                         <td>${c.points}</td>
-                        <td><button class="btn btn-greenipx; fo
+                        <td><button class="btn btn-green reward-btn" data-index="${index}" style="padding: 5px 10px; font-size: 0.8rem;">+10</button></td>
+                    </tr>`;
             });
             classTable.innerHTML = classHTML;
         }
@@ -229,10 +287,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 4.1 ЛОГИКА УЧИТЕЛЯ: НАГРАЖДЕНИЕ ---
     function rewardStudent(index) {
+        dynamicClassmates[index].points += 10;
         localStorage.setItem(getClassKey(), JSON.stringify(dynamicClassmates));
         updateUI();
+        
+        // Если мы на странице родителя или учителя, обновляем график
+        if (document.getElementById('parent').classList.contains('active')) {
+            initChart();
+        }
     }
-/ --- 4. ЛОГИКА БАЛЛОВ ---
+
+    // --- 4. ЛОГИКА БАЛЛОВ ---
     function addPoints() {
         if (currentPoints < 100) {
             currentPoints += 10;
@@ -265,9 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 5. ДЕТАЛИ ДОМАШКИ ---
     function showHW(title, text) {
-        document.getElementById('hw-title').textContent = title;
-        document.getElementById('hw-text').textContent = text;
-        document.getElementById('hw-details').style.display = 'block';
+        const modal = document.getElementById('hw-details');
+        if (modal) {
+            document.getElementById('hw-title').textContent = title;
+            document.getElementById('hw-text').textContent = text;
+            modal.style.display = 'block';
+        }
     }
 
     // --- 6. ГРАФИК ---
@@ -296,7 +364,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-function closeHW() {
-    document.getElementById('hw-details').style.display = 'none';
-}

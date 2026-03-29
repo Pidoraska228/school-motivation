@@ -103,7 +103,7 @@
     </div>
     <div class="card">
         <h2>Последние оценки</h2>
-        <span style="font-size: 1.5rem; font-weight: bold; color: var(--primary-green);">5, 5, 4, 5, 5</span>
+        <span id="grades-list" style="font-size: 1.5rem; font-weight: bold; color: var(--primary-green);"></span>
     </div>
 </section>
 
@@ -115,7 +115,7 @@
     </div>
     <div class="card" style="text-align:center">
         <h3>Порадовать ребенка?</h3>
-        <button class="btn btn-blue" onclick="alert('Бонус отправлен! На телефон ребенка придет уведомление.')">Отправить бонус (мороженое 🍦)</button>
+        <button class="btn btn-blue" id="send-bonus-btn">Отправить бонус (мороженое 🍦)</button>
     </div>
 </section>
 
@@ -134,7 +134,7 @@
 <div id="hw-details" class="modal">
     <h3 id="hw-title">Предмет</h3>
     <p id="hw-text" style="margin: 15px 0;"></p>
-    <button class="btn btn-blue" onclick="document.getElementById('hw-details').style.display='none'">Закрыть</button>
+    <button class="btn btn-blue" id="close-hw-details">Закрыть</button>
 </div>
 
 <!-- Модальное окно для добавления ДЗ (для учителя) -->
@@ -150,7 +150,7 @@
     </div>
     <div style="display: flex; gap: 10px; margin-top: 20px;">
         <button class="btn btn-blue" id="save-hw-btn">Сохранить</button>
-        <button class="btn" onclick="document.getElementById('add-hw-modal').style.display='none'" style="flex: 1; background: #eee;">Отмена</button>
+        <button class="btn" id="cancel-hw-btn" style="flex: 1; background: #eee;">Отмена</button>
     </div>
 </div>
 
