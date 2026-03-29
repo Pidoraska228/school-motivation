@@ -1,0 +1,10 @@
+# Игнорируем папки инструментов
+.gemini/
+.vscode/
+.claude/
+
+# Системные файлы
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log

@@ -1,0 +1,68 @@
+:root {
+    --primary-blue: #3a86ff;
+    --primary-green: #06d6a0;
+    --bg-color: #f8f9fa;
+    --text-dark: #2b2d42;
+    --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+body { background-color: var(--bg-color); color: var(--text-dark); line-height: 1.6; }
+
+nav {
+    background: white; padding: 1rem 5%; display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000;
+}
+.logo { font-weight: 700; font-size: 1.5rem; color: var(--primary-blue); cursor: pointer; }
+.nav-links button {
+    background: none; border: none; margin-left: 20px; font-weight: 600; cursor: pointer;
+    color: var(--text-dark); transition: color 0.3s;
+}
+.nav-links button:hover { color: var(--primary-green); }
+
+.page { display: none; padding: 2rem 5%; max-width: 1200px; margin: 0 auto; }
+.active { display: block; animation: fadeIn 0.5s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.card { background: white; padding: 2rem; border-radius: 20px; box-shadow: var(--card-shadow); margin-bottom: 2rem; }
+h2 { margin-bottom: 1.5rem; color: var(--primary-blue); }
+
+.hero { text-align: center; padding: 4rem 1rem; }
+.benefits { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+.btn { padding: 12px 24px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-blue { background: var(--primary-blue); color: white; }
+.btn-green { background: var(--primary-green); color: white; }
+.btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+.progress-container { background: #eee; border-radius: 20px; height: 25px; margin: 10px 0; overflow: hidden; }
+.progress-bar { background: var(--primary-green); height: 100%; width: 0%; transition: width 0.5s ease; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 15px; border-bottom: 1px solid #eee; }
+
+.hw-item {
+    cursor: pointer; padding: 15px; border-left: 5px solid var(--primary-blue);
+    background: #f0f7ff; margin-bottom: 10px; border-radius: 0 12px 12px 0;
+    transition: background 0.3s;
+}
+.hw-item:hover { background: #e0eeff; }
+
+#hw-details {
+    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: white; padding: 2.5rem; border-radius: 25px; box-shadow: 0 0 100px rgba(0,0,0,0.3); z-index: 1001;
+}
+
+/* Стили для формы регистрации */
+.auth-container { max-width: 450px; margin: 10vh auto; text-align: center; }
+.form-group { text-align: left; margin-bottom: 1.5rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+.form-group input, .form-group select {
+    width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; font-size: 1rem;
+    outline: none; transition: border-color 0.3s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--primary-blue); }
+
+#main-nav[style*="display: none"] + .page {
+    margin-top: 5vh;
+}

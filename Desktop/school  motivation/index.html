@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motivation School Diary</title>
+    <!-- Подключаем шрифт для дружелюбного вида -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Подключаем Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav id="main-nav" style="display: none;">
+    <div class="logo" id="logo-home">🚀 MotivationDiary</div>
+    <div class="nav-links">
+        <button data-page="home">Главная</button>
+        <button data-page="student">Ученик</button>
+        <button data-page="parent">Родитель</button>
+        <button data-page="teacher">Учитель</button>
+        <button id="logout-btn" style="color: #ff4d4d;">Выйти</button>
+    </div>
+</nav>
+
+<!-- ЭКРАН РЕГИСТРАЦИИ -->
+<section id="auth" class="page active">
+    <div class="card auth-container">
+        <h2>Добро пожаловать! 🎒</h2>
+        <p>Заполни данные, чтобы начать путь к успеху</p>
+        <form id="reg-form">
+            <div class="form-group">
+                <label for="reg-name">Ваше имя</label>
+                <input type="text" id="reg-name" placeholder="Иван Иванов" required>
+            </div>
+            <div class="form-group">
+                <label for="reg-region">Регион</label>
+                <select id="reg-region" required>
+                    <option value="">Выберите регион</option>
+                    <option value="77">Москва</option>
+                    <option value="78">Санкт-Петербург</option>
+                    <option value="50">Московская область</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="reg-school">Школа</label>
+                <select id="reg-school" required>
+                    <option value="">Сначала выберите регион</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="reg-role">Кто вы?</label>
+                <select id="reg-role" required>
+                    <option value="student">Ученик</option>
+                    <option value="parent">Родитель</option>
+                    <option value="teacher">Учитель</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-blue" style="width: 100%;">Войти в дневник</button>
+        </form>
+    </div>
+</section>
+
+<!-- ГЛАВНАЯ СТРАНИЦА -->
+<section id="home" class="page">
+    <div class="hero">
+        <h1>Твой путь к успеху начинается здесь!</h1>
+        <p>Электронный дневник, который превращает учебу в увлекательную игру.</p>
+    </div>
+
+    <div class="benefits">
+        <div class="card">
+            <h3>🌟 Ученикам</h3>
+            <p>Зарабатывай баллы за 5-ки и обменивай их на бонусы. Прогресс-бар покажет твой рост!</p>
+        </div>
+        <div class="card">
+            <h3>👨‍👩‍👧 Родителям</h3>
+            <p>Удобные графики успеваемости и возможность мгновенно поощрить ребенка.</p>
+        </div>
+        <div class="card">
+            <h3>🏫 Школам</h3>
+            <p>Повышение вовлеченности учеников и простая отчетность для учителей.</p>
+        </div>
+    </div>
+</section>
+
+<!-- КАБИНЕТ УЧЕНИКА -->
+<section id="student" class="page">
+    <div class="card">
+        <h2 id="student-greeting">Привет!</h2>
+        <p>Баллы: <span id="points-text">0</span> / 100</p>
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <button class="btn btn-green" id="add-points-btn" style="margin-top:10px">Получить +10 баллов за активность!</button>
+    </div>
+    <div class="card">
+        <h2>Расписание на сегодня</h2>
+        <table id="schedule-table"></table>
+    </div>
+    <div class="card">
+        <h2>Домашнее задание</h2>
+        <div id="hw-list"></div>
+    </div>
+    <div class="card">
+        <h2>Последние оценки</h2>
+        <span style="font-size: 1.5rem; font-weight: bold; color: var(--primary-green);">5, 5, 4, 5, 5</span>
+    </div>
+</section>
+
+<!-- КАБИНЕТ РОДИТЕЛЯ -->
+<section id="parent" class="page">
+    <div class="card">
+        <h2 id="parent-child-name">Прогресс ребенка</h2>
+        <canvas id="progressChart" width="400" height="200"></canvas>
+    </div>
+    <div class="card" style="text-align:center">
+        <h3>Порадовать ребенка?</h3>
+        <button class="btn btn-blue" onclick="alert('Бонус отправлен! На телефон ребенка придет уведомление.')">Отправить бонус (мороженое 🍦)</button>
+    </div>
+</section>
+
+<!-- КАБИНЕТ УЧИТЕЛЯ -->
+<section id="teacher" class="page">
+    <div class="card">
+        <h2 id="teacher-class-name">Мой класс</h2>
+        <table id="class-table"></table>
+    </div>
+    <div class="card">
+        <button class="btn btn-blue" id="add-hw-btn">➕ Добавить домашку</button>
+    </div>
+</section>
+
+<!-- Модальное окно для ДЗ -->
+<div id="hw-details">
+    <h3 id="hw-title">Предмет</h3>
+    <p id="hw-text" style="margin: 15px 0;"></p>
+    <button class="btn btn-blue" onclick="document.getElementById('hw-details').style.display='none'">Закрыть</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
