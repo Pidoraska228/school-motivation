@@ -131,11 +131,29 @@
 </section>
 
 <!-- Модальное окно для ДЗ -->
-<div id="hw-details">
+<div id="hw-details" class="modal">
     <h3 id="hw-title">Предмет</h3>
     <p id="hw-text" style="margin: 15px 0;"></p>
     <button class="btn btn-blue" onclick="document.getElementById('hw-details').style.display='none'">Закрыть</button>
 </div>
+
+<!-- Модальное окно для добавления ДЗ (для учителя) -->
+<div id="add-hw-modal" class="modal">
+    <h3 style="color: var(--primary-blue); margin-bottom: 15px;">Новое задание 📝</h3>
+    <div class="form-group">
+        <label for="new-hw-subject">Предмет</label>
+        <input type="text" id="new-hw-subject" placeholder="Например, Математика">
+    </div>
+    <div class="form-group">
+        <label for="new-hw-text">Задание</label>
+        <textarea id="new-hw-text" placeholder="Что нужно сделать?" rows="3" style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; font-family: inherit;"></textarea>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-blue" id="save-hw-btn">Сохранить</button>
+        <button class="btn" onclick="document.getElementById('add-hw-modal').style.display='none'" style="flex: 1; background: #eee;">Отмена</button>
+    </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

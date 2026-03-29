@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let appData = {};
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
+    // Ключ для хранения домашних заданий в localStorage
+    const getHWKey = () => currentUser ? `homework_${currentUser.school}` : 'global_homework';
+    let dynamicHomework = JSON.parse(localStorage.getItem(getHWKey())) || null;
+
+    // Ключ для хранения списка класса в localStorage
+    const getClassKey = () => currentUser ? `classmates_${currentUser.school}` : 'global_classmates';
+    let dynamicClassmates = JSON.parse(localStorage.getItem(getClassKey())) || null;
+
     // Функция для получения ключа баллов конкретного пользователя
     const getPointsKey = () => currentUser ? `points_${currentUser.name}_${currentUser.school}` : 'userPoints';
     
@@ -30,6 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Ошибка сети при загрузке данных');
             appData = await response.json();
             
+            // Инициализируем задания из JSON, если в localStorage пусто
+            if (!dynamicHomework) {
+                dynamicHomework = appData.homework || [];
+                localStorage.setItem(getHWKey(), JSON.stringify(dynamicHomework));
+            }
+            
+            // Инициализируем список класса из JSON, если в localStorage пусто
+            if (!dynamicClassmates) {
+                dynamicClassmates = appData.classmates || [];
+                localStorage.setItem(getClassKey(), JSON.stringify(dynamicClassmates));
+            }
+
             // Инициализируем баллы только если их еще нет в памяти для этого пользователя
             if (localStorage.getItem(getPointsKey()) === null) {
                 currentPoints = appData.student?.points || 0;
@@ -53,6 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadInitialData();
+
+    // Глобальный обработчик закрытия окон по Esc
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('#hw-details, #add-hw-modal').forEach(m => m.style.display = 'none');
+        }
+    });
 
     // --- 2. ЛОГИКА АВТОРИЗАЦИИ ---
     function setupAuth() {
@@ -128,6 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.getElementById('logo-home').onclick = () => showPage('home');
         document.getElementById('add-points-btn').onclick = addPoints;
+
+        // Обработка кнопок учителя
+        const addHwBtn = document.getElementById('add-hw-btn');
+        if (addHwBtn) {
+            addHwBtn.onclick = () => document.getElementById('add-hw-modal').style.display = 'block';
+        }
+        const saveHwBtn = document.getElementById('save-hw-btn');
+        if (saveHwBtn) {
+            saveHwBtn.onclick = saveHomework;
+        }
     }
 
     function showPage(pageId) {
@@ -159,9 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Домашка
         const hwList = document.getElementById('hw-list');
-        if (hwList && appData.homework) {
+        if (hwList && dynamicHomework) {
             const fragment = document.createDocumentFragment();
-            appData.homework.forEach(hw => {
+            dynamicHomework.forEach(hw => {
                 const div = document.createElement('div');
                 div.className = 'hw-item';
                 div.textContent = hw.subject;
@@ -176,16 +213,26 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('parent-child-name').textContent = `Прогресс: ${currentUser.name}`;
         
         const classTable = document.getElementById('class-table');
-        if (classTable && appData.classmates) {
-            let classHTML = '<tr><th>Ученик</th><th>Оценка</th><th>Баллы</th></tr>';
-            appData.classmates.forEach(c => {
-                classHTML += `<tr><td>${c.name}</td><td>${c.grade}</td><td>${c.points}</td></tr>`;
+        if (classTable && dynamicClassmates) {
+            let classHTML = '<tr><th>Ученик</th><th>Оценка</th><th>Баллы</th><th>Действие</th></tr>';
+            dynamicClassmates.forEach((c, index) => {
+                classHTML += `
+                    <tr>
+                        <td>${c.name}</td>
+                        <td>${c.grade}</td>
+                        <td>${c.points}</td>
+                        <td><button class="btn btn-greenipx; fo
             });
             classTable.innerHTML = classHTML;
         }
     }
 
-    // --- 4. ЛОГИКА БАЛЛОВ ---
+    // --- 4.1 ЛОГИКА УЧИТЕЛЯ: НАГРАЖДЕНИЕ ---
+    function rewardStudent(index) {
+        localStorage.setItem(getClassKey(), JSON.stringify(dynamicClassmates));
+        updateUI();
+    }
+/ --- 4. ЛОГИКА БАЛЛОВ ---
     function addPoints() {
         if (currentPoints < 100) {
             currentPoints += 10;
@@ -193,6 +240,27 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
             if (currentPoints >= 100) alert("Ура! Новый уровень достигнут!");
         }
+    }
+
+    // --- 5. СОХРАНЕНИЕ ДОМАШКИ (для учителя) ---
+    function saveHomework() {
+        const subjectInput = document.getElementById('new-hw-subject');
+        const textInput = document.getElementById('new-hw-text');
+        const subject = subjectInput.value.trim();
+        const text = textInput.value.trim();
+
+        if (!subject || !text) {
+            alert("Заполните все поля задания!");
+            return;
+        }
+
+        dynamicHomework.unshift({ subject, description: text });
+        localStorage.setItem(getHWKey(), JSON.stringify(dynamicHomework));
+        
+        document.getElementById('add-hw-modal').style.display = 'none';
+        subjectInput.value = '';
+        textInput.value = '';
+        updateUI();
     }
 
     // --- 5. ДЕТАЛИ ДОМАШКИ ---
