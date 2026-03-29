@@ -7,17 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let appData = {};
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
-    // Ключ для хранения домашних заданий в localStorage
-    const getHWKey = () => currentUser ? `homework_${currentUser.school}` : 'global_homework';
-    let dynamicHomework = JSON.parse(localStorage.getItem(getHWKey())) || null;
-
-    // Ключ для хранения списка класса в localStorage
-    const getClassKey = () => currentUser ? `classmates_${currentUser.school}` : 'global_classmates';
-    let dynamicClassmates = JSON.parse(localStorage.getItem(getClassKey())) || null;
-
-    // Функция для получения ключа баллов конкретного пользователя
-    const getPointsKey = () => currentUser ? `points_${currentUser.name}_${currentUser.school}` : 'userPoints';
+    // --- КОНСТАНТЫ И КЛЮЧИ ХРАНИЛИЩА ---
+    const MAX_POINTS = 100;
     
+    // Ключи для localStorage, привязанные к пользователю/школе
+    const getHWKey = () => currentUser ? `homework_${currentUser.school}` : 'global_homework';
+    const getClassKey = () => currentUser ? `classmates_${currentUser.school}` : 'global_classmates';
+    const getPointsKey = () => currentUser ? `points_${currentUser.name}_${currentUser.school}` : 'userPoints';
+
+    let dynamicHomework = JSON.parse(localStorage.getItem(getHWKey())) || null;
+    let dynamicClassmates = JSON.parse(localStorage.getItem(getClassKey())) || null;
     let currentPoints = parseInt(localStorage.getItem(getPointsKey())) || 0;
 
     // Отключаем кнопки до загрузки данных
@@ -214,15 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        
-        // Подсветка активной кнопки в меню
+
+        // Управление активным состоянием кнопок навигации через классы
         document.querySelectorAll('.nav-links button').forEach(btn => {
-            btn.style.color = btn.dataset.page === pageId ? 'var(--primary-green)' : 'var(--text-dark)';
+            btn.classList.toggle('active-nav', btn.dataset.page === pageId);
         });
 
         const targetPage = document.getElementById(pageId);
         if (targetPage) targetPage.classList.add('active');
         
+        window.scrollTo(0, 0); // Прокрутка вверх при смене страницы
+
         if (pageId === 'parent') initChart();
         if (pageId === 'student' || pageId === 'teacher') updateUI();
     }
@@ -233,16 +234,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('student-greeting').textContent = `Привет, ${currentUser.name}! 👋`;
         document.getElementById('points-text').textContent = currentPoints;
-        document.getElementById('progress-bar').style.width = Math.min(currentPoints, 100) + '%';
+        document.getElementById('progress-bar').style.width = Math.min((currentPoints / MAX_POINTS) * 100, 100) + '%';
 
         // Расписание
         const scheduleTable = document.getElementById('schedule-table');
         if (scheduleTable && appData.schedule) {
-            let tableHTML = '<tr><th>Урок</th><th>Время</th></tr>';
+            const fragment = document.createDocumentFragment();
+            const header = document.createElement('tr');
+            header.innerHTML = '<th>Урок</th><th>Время</th>';
+            fragment.appendChild(header);
+
             appData.schedule.forEach(item => {
-                tableHTML += `<tr><td>${item.subject}</td><td>${item.time}</td></tr>`;
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.subject}</td><td>${item.time}</td>`;
+                fragment.appendChild(row);
             });
-            scheduleTable.innerHTML = tableHTML;
+            scheduleTable.replaceChildren(fragment);
         }
 
         // Домашка
@@ -256,8 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.onclick = () => showHW(hw.subject, hw.description);
                 fragment.appendChild(div);
             });
-            hwList.innerHTML = '';
-            hwList.appendChild(fragment);
+            hwList.replaceChildren(fragment);
         }
 
         // Оценки
@@ -271,24 +277,36 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const classTable = document.getElementById('class-table');
         if (classTable && dynamicClassmates) {
-            let classHTML = '<tr><th>Ученик</th><th>Оценка</th><th>Баллы</th><th>Действие</th></tr>';
+            const fragment = document.createDocumentFragment();
+            const header = document.createElement('tr');
+            header.innerHTML = '<th>Ученик</th><th>Оценка</th><th>Баллы</th><th>Действие</th>';
+            fragment.appendChild(header);
+
             dynamicClassmates.forEach((c, index) => {
-                classHTML += `
-                    <tr>
-                        <td>${c.name}</td>
-                        <td>${c.grade}</td>
-                        <td>${c.points}</td>
-                        <td><button class="btn btn-green reward-btn" data-index="${index}" style="padding: 5px 10px; font-size: 0.8rem;">+10</button></td>
-                    </tr>`;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${c.name}</td>
+                    <td>${c.grade}</td>
+                    <td>${c.points}</td>
+                    <td><button class="btn btn-green reward-btn" data-index="${index}" style="padding: 5px 10px; font-size: 0.8rem;">+10</button></td>`;
+                fragment.appendChild(row);
             });
-            classTable.innerHTML = classHTML;
+            classTable.replaceChildren(fragment);
         }
     }
 
     // --- 4.1 ЛОГИКА УЧИТЕЛЯ: НАГРАЖДЕНИЕ ---
     function rewardStudent(index) {
-        dynamicClassmates[index].points += 10;
+        const student = dynamicClassmates[index];
+        student.points += 10;
         localStorage.setItem(getClassKey(), JSON.stringify(dynamicClassmates));
+
+        // Синхронизация: если учитель наградил ТЕКУЩЕГО пользователя
+        if (currentUser && student.name === currentUser.name) {
+            currentPoints += 10;
+            localStorage.setItem(getPointsKey(), currentPoints);
+        }
+
         updateUI();
         
         // Если мы на странице родителя или учителя, обновляем график
@@ -299,11 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 4. ЛОГИКА БАЛЛОВ ---
     function addPoints() {
-        if (currentPoints < 100) {
+        if (currentPoints < MAX_POINTS) {
             currentPoints += 10;
             localStorage.setItem(getPointsKey(), currentPoints);
             updateUI();
-            if (currentPoints >= 100) alert("Ура! Новый уровень достигнут!");
+            if (currentPoints >= MAX_POINTS) alert("Ура! Ты настоящий отличник! 🏆");
         }
     }
 

@@ -19,6 +19,7 @@ nav {
     color: var(--text-dark); transition: color 0.3s;
 }
 .nav-links button:hover { color: var(--primary-green); }
+.nav-links button.active-nav { color: var(--primary-green); border-bottom: 2px solid var(--primary-green); }
 
 .page { display: none; padding: 2rem 5%; max-width: 1200px; margin: 0 auto; }
 .active { display: block; animation: fadeIn 0.5s; }
